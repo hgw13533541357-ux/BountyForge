@@ -1,0 +1,66 @@
+name: BountyForge Nightly
+on:
+  schedule:
+    - cron: '0 3 * * *'
+      timezone: 'UTC'
+  workflow_dispatch:
+
+concurrency:
+  group: nightly
+  cancel-in-progress: false
+
+jobs:
+  scan:
+    name: 🔍 Stage 1 - Scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    outputs:
+      targets_found: ${{ steps.scan.outputs.count }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: pip install -r requirements.txt
+      - id: scan
+        run: |
+          python bountyforge.py scan --max 100
+          echo "count=${{ steps.scan.outputs.count || 'done' }}" >> $GITHUB_OUTPUT
+      - uses: actions/upload-artifact@v4
+        with:
+          name: nightly-scan
+          path: output/
+
+  exploit:
+    name: ⚔️ Stage 2 - Exploit
+    runs-on: ubuntu-latest
+    needs: [scan]
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: pip install -r requirements.txt
+      - run: python bountyforge.py exploit
+      - uses: actions/upload-artifact@v4
+        with:
+          name: nightly-exploit
+          path: output/vuln_*.md
+
+  report:
+    name: 📊 Stage 3 - Report
+    runs-on: ubuntu-latest
+    needs: [scan, exploit]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: pip install -r requirements.txt
+      - run: python bountyforge.py report --format all
+      - uses: actions/upload-artifact@v4
+        with:
+          name: nightly-report
+          path: output/
+          retention-days: 30
