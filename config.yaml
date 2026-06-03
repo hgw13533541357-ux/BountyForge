@@ -1,0 +1,23 @@
+github:
+  token: $GITHUB_TOKEN
+  username: ""
+platforms:
+  polar:
+    enabled: true
+    api_url: "https://api.polar.sh/v1"
+  gitcoin:
+    enabled: true
+scanning:
+  max_results_per_platform: 100
+  preferred_languages:
+    - python
+    - javascript
+    - typescript
+exploit:
+  check_types:
+    - sqli
+    - xss
+    - ssrf
+  generate_poc: true
+output:
+  report_dir: "./output/"
