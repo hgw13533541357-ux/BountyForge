@@ -1,0 +1,40 @@
+name: BountyForge Manual
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: 'Execution mode'
+        required: true
+        default: 'scan'
+        type: choice
+        options:
+          - scan
+          - exploit
+          - report
+          - all
+      platforms:
+        description: 'Platforms (scan mode)'
+        default: 'polar,gitcoin'
+      max_results:
+        description: 'Max targets'
+        default: '100'
+      notify:
+        description: 'Send notification'
+        type: boolean
+        default: true
+
+jobs:
+  run:
+    name: 💀 Manual ${{ inputs.mode }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: pip install -r requirements.txt
+      - run: |
+          python bountyforge.py ${{ inputs.mode }} \
+            --platforms ${{ inputs.platforms }} \
+            --max ${{ inputs.max_results }} \
+            --notify ${{ inputs.notify }}
